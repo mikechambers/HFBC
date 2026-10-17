@@ -39,7 +39,7 @@ struct AboutView: View {
 				.replacingOccurrences(of: "https://", with: ""), destination: Config.hfbcURL)
 			Spacer()
 
-			Text("Copyright © 2026 by Mike Chambers.")
+			Text("Copyright © 2026 by Mike Chambers (W6MSH).")
 				.multilineTextAlignment(.center).font(.subheadline)
 			Spacer()
 
