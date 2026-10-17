@@ -163,18 +163,5 @@ enum BandCondition {
 			default : return nil
 		}
 	}
-
-	
-	/*
-	var color : Color {
-		switch self {
-		case .good:
-			return .green
-		case .fair:
-			return .yellow
-		case .poor:
-			return .red
-		}
-	}*/
 }
 

@@ -14,6 +14,8 @@ struct HFBCApp: App {
 	
 	@AppStorage("alwaysOnTop") private var alwaysOnTop = false
 	
+	@NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+	
     var body: some Scene {
         WindowGroup {
 			ContentView().environment(dataManager)
@@ -31,7 +33,38 @@ struct HFBCApp: App {
 				Toggle("Always on Top", isOn: $alwaysOnTop)
 					.keyboardShortcut("t", modifiers: [.command, .option])
 			}
+			CommandGroup(replacing: CommandGroupPlacement.appInfo) {
+				Button(action: {
+					appDelegate.showAboutPanel()
+				}) {
+					Text("About HFBC")
+				}
+			}
 		}
 		
     }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+	private var aboutBoxWindowController: NSWindowController?
+
+	func showAboutPanel() {
+		if aboutBoxWindowController == nil {
+			aboutBoxWindowController = createAboutBoxWindowController()
+		}
+
+		aboutBoxWindowController?.showWindow(nil)
+	}
+
+	private func createAboutBoxWindowController() -> NSWindowController {
+		let styleMask: NSWindow.StyleMask = [.closable, .miniaturizable, .titled]
+		let window = NSWindow()
+		window.styleMask = styleMask
+		window.title = "About HFBC"
+		window.contentView = NSHostingView(rootView: AboutView())
+
+		window.center()
+
+		return NSWindowController(window: window)
+	}
 }
