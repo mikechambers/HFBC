@@ -12,6 +12,7 @@ HFBC is a macOS desktop application that displays current HF band conditions for
 
 - Solar and band data courtesy of [HAMQSL.com](https://www.hamqsl.com/solar.html) (N0NBH)
 
+- App idea inspired by [Solar Conditions & Ham Radio Propagation](https://solar.w5mmw.net/) site by W5MMW.
 
 ## Questions, Feature Requests, Feedback
 
