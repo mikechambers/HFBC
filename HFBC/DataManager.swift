@@ -9,13 +9,14 @@ import AppKit
 import Foundation
 import SWXMLHash
 import SwiftUI
+import OSLog
 
 @MainActor
 @Observable
 final class DataManager {
 	
 	@ObservationIgnored var timer:Timer? = nil
-	let interval:TimeInterval = 60 * 60.0 //5 minutes
+	let interval:TimeInterval = 15 * 60.0
 	
 	var statuses:[Band:BandStatus] = [:]
 	
@@ -27,46 +28,115 @@ final class DataManager {
 		
 		timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) {[weak self] _ in
 			Task { @MainActor in
-				await self?.loadData()
+				do {
+					guard let self else {
+						Logger.app.critical("Couldn't unwrap self in DataManager. Aborting data loading.")
+						return
+					}
+					
+					let s = try await self.loadUTF8()
+					try self.parseXML(xml: s)
+				} catch {
+	
+					Logger.app.error("Failed to load and parse XML: \(error)")
+				}
 			}
 		}
 		
 		timer?.fire()
 	}
 	
-	func loadData() async {
+	func reloadData() {
+		timer?.fire()
+	}
+	
+	func loadUTF8() async throws -> String {
 		
 		do {
 			let (data, _) = try await URLSession.shared.data(from: dataURL)
-			let xml = String(data: data, encoding: .utf8) ?? "Failed to decode"
+			
+			
+			guard let s = String(data: data, encoding: .utf8) else {
+				throw AppError.data(
+					details: ErrorDetails(level: .critical,
+										  message: "Could not decode data as UTF-8."))
+			}
 
-			parseXML(xml:xml)
+			return s
 			
 		} catch {
-			print("Network request failed: \(error.localizedDescription)")
+			throw AppError.network(
+				details: ErrorDetails(
+					level: .warning,
+					message: "Could not load bandwidth condition data.", error: error))
 		}
 	}
 	
-	func parseXML(xml:String) {
-		let xml = XMLHash.parse(xml)
+	func parseXML(xml:String) throws {
 		
+		let xml = XMLHash.config {
+					  config in
+			config.detectParsingErrors = true
+				  }.parse(xml)
+
+
+		if case .parsingError(let error) = xml {
+			throw AppError.data(
+				details: ErrorDetails(
+					level: .critical,
+					message: "XML Parsing Failed. Invalid XML data syntax",
+					error: error)
+			)
+		}
+		
+		let bandIndexer = xml["solar"]["solardata"]["calculatedconditions"]["band"]
+		
+		if case .xmlError(let error) = bandIndexer {
+			throw AppError.data(
+				details: ErrorDetails(
+					level: .critical,
+					message: "Required XML are missing.",
+					error: error)
+			)
+		}
+		
+		if bandIndexer.all.isEmpty {
+			Logger.data.warning("calculatedconditions xml node is empty. Skipping parsing.")
+			return
+		}
 		
 		var parsed: [Band: BandStatus] = [:]
 		
-		for elem in xml["solar"]["solardata"]["calculatedconditions"]["band"].all {
+		for elem in bandIndexer.all {
 
-			let bandName = elem.element?.attribute(by: "name")?.text ?? "Unknown"
-			let bandTime = elem.element?.attribute(by: "time")?.text ?? "Unknown"
+			guard let bandName = elem.element?.attribute(by: "name")?.text else {
+				Logger.data.error("calculatedconditions element missing name attribute. Skipping band.")
+				continue
+			}
 			
-			// 2. Grab the tag's inner status text
-			let condition = elem.element?.text ?? ""
+			guard let bandTime = elem.element?.attribute(by: "time")?.text else {
+				Logger.data.error("calculatedconditions element missing time attribute Skipping band.")
+				continue
+			}
 			
-			guard let band = Band(s: bandName) else { continue }
-			guard let period = DayPeriod(s: bandTime) else { continue }
-			guard let condition = BandCondition(s: condition) else { continue }
+			guard let condition = elem.element?.text else {
+				Logger.data.error("calculatedconditions element missing data (condition). Skipping band.")
+				continue
+			}
 			
+			guard let band = Band(s: bandName) else {
+				Logger.data.info("Data contained an unknown band: \(bandName)")
+				continue
+			}
 			
-			//let bandStatus = BandStatus(band: band, period: period, condition: condition)
+			guard let period = DayPeriod(s: bandTime) else {
+				Logger.data.info("Data contained an unknown period: \(bandTime)")
+				continue
+			}
+			guard let condition = BandCondition(s: condition) else {
+				Logger.data.info("Data contained an unknown condition: \(condition)")
+				continue
+			}
 			
 			if parsed[band] == nil {
 				parsed[band] = BandStatus()
