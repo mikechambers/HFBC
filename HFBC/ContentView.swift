@@ -9,39 +9,26 @@ import SwiftUI
 
 struct ContentView: View {
 	@Environment(DataManager.self) private var dataManager
-	
+	@Environment(\.colorScheme) private var scheme
 	
     var body: some View {
         VStack {
-			/*
-			HStack {
-				Text("HF Band Conditions")
-					.font(.largeTitle.bold())
-				Spacer()
-				Text("02:20 UTC : 16 Oct 2026")
-					.font(.title2.bold())
-			}
-			Divider()
-			 */
+
 			Grid {
 				GridRow {
 					Text("")
 						.font(.caption.weight(.semibold))
 						.tracking(1)
 						.foregroundStyle(.secondary)
-					//Text("DAY").gridColumnAlignment(.center).font(.title2.bold())
-					//Text("NIGHT").gridColumnAlignment(.center).font(.title2.bold())
 					Image(systemName: "sun.max")
 						.font(.title3.weight(.bold))
-						.foregroundStyle(.orange)
-			
+						.foregroundStyle(Color(hex: scheme == .dark ? 0xF5B44A : 0xE8890C))
 						.help("Day")
 						.accessibilityLabel("Day")
 
 					Image(systemName: "moon")
 						.font(.title3.weight(.bold))
-						.foregroundStyle(.indigo)
-					
+						.foregroundStyle(Color(hex: scheme == .dark ? 0x9EA8FF : 0x5B4FD1))
 						.help("Night")
 						.accessibilityLabel("Night")
 				}

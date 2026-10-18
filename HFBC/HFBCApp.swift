@@ -22,7 +22,7 @@ struct HFBCApp: App {
 				.padding()
 				.frame(width: 400)
 				.fixedSize(horizontal: false, vertical: true)
-				.preferredColorScheme(.light)
+				//.preferredColorScheme(.dark)
 				
 				//.frame(maxWidth: 480, maxHeight: 480)
         }
