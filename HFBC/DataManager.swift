@@ -20,11 +20,9 @@ final class DataManager {
 	
 	var statuses:[Band:BandStatus] = [:]
 	
-	let dataURL:URL
+	let dataURL:URL = URL(string: "https://www.hamqsl.com/solarxml.php")!
 	
 	init() {
-		
-		dataURL = URL(string: "https://www.hamqsl.com/solarxml.php")!
 		
 		timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) {[weak self] _ in
 			Task { @MainActor in

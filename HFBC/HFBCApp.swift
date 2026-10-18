@@ -33,6 +33,14 @@ struct HFBCApp: App {
 				Toggle("Always on Top", isOn: $alwaysOnTop)
 					.keyboardShortcut("t", modifiers: [.command, .option])
 			}
+			CommandGroup(after: .newItem) {
+				Divider()
+				Button(action: {
+					dataManager.reloadData()
+				}) {
+					Text("Refresh Data")
+				}
+			}
 			CommandGroup(replacing: CommandGroupPlacement.appInfo) {
 				Button(action: {
 					appDelegate.showAboutPanel()
