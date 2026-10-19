@@ -16,10 +16,13 @@ struct ContentView: View {
 
 			Grid {
 				GridRow {
+					
 					Text("")
 						.font(.caption.weight(.semibold))
 						.tracking(1)
 						.foregroundStyle(.secondary)
+					 
+	
 					Image(systemName: "sun.max")
 						.font(.title3.weight(.bold))
 						.foregroundStyle(Color(hex: scheme == .dark ? 0xF5B44A : 0xE8890C))
@@ -66,7 +69,39 @@ struct ContentView: View {
         }
         //.padding()
 		//Text("Data: HAMQSL.com")
+		
+		HStack {
+			if dataManager.isLoading {
+				ProgressView().controlSize(.small).frame(alignment: .leading)
+			} else {
+				Color.clear
+					.frame(width: 16, height: 16)
+			}
+			Spacer()
+			TimelineView(.periodic(from: .now, by: 30)) { context in
+				let text = updatedText(for: dataManager.lastUpdated, now: context.date)
+
+				Text(text)
+					.font(.caption)
+					.foregroundStyle(.secondary)
+					.contentTransition(.opacity)
+					.animation(.easeInOut(duration: 0.4), value: text)
+			}
+		}
+		
     }
+	
+	private let relativeFormatter: RelativeDateTimeFormatter = {
+		let f = RelativeDateTimeFormatter()
+		f.unitsStyle = .full
+		return f
+	}()
+
+	func updatedText(for date: Date?, now: Date) -> String {
+		guard let date else { return "Not updated yet" }
+		if now.timeIntervalSince(date) < 60 { return "Updated just now" }
+		return "Updated " + relativeFormatter.localizedString(for: date, relativeTo: now)
+	}
 }
 
 #Preview {

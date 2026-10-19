@@ -18,6 +18,9 @@ final class DataManager {
 	@ObservationIgnored var timer:Timer? = nil
 	let interval:TimeInterval = 15 * 60.0
 	
+	var isLoading:Bool = false
+	var lastUpdated: Date?
+	
 	var statuses:[Band:BandStatus] = [:]
 	
 	let dataURL:URL = URL(string: "https://www.hamqsl.com/solarxml.php")!
@@ -32,8 +35,15 @@ final class DataManager {
 						return
 					}
 					
+					self.isLoading = true
+					
+					defer {
+						self.isLoading = false
+					}
+					
 					let s = try await self.loadUTF8()
 					try self.parseXML(xml: s)
+					self.lastUpdated = Date()
 				} catch {
 	
 					Logger.app.error("Failed to load and parse XML: \(error)")
